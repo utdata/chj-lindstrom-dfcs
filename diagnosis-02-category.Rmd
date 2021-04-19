@@ -10,6 +10,25 @@ output:
 knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_dir = "docs") })
 ---
 
+## Goal and purpose
+
+- You want the count and percentage of kids that have at least one diagnosis. (But isn’t that all of them here?)
+- You want the count and percentage of kids with more than one diagnosis (i.e, more than one column with a result). Better yet, the count of the different diagnosis for each kid.
+- You want to categorize the diagnosis into three buckets: medical, mental/behavioral and developmental. Then you want to know how many kids have a diagnosis in more than one bucket.
+
+## Method
+
+- I create a new column for each diagnosis column.
+  - The name of the column includes the category of the diagnosis.
+  - I make the value "1" if there is a diagnosis and "0" if not. Based on any text being present in the column.
+- I create a total diagnosis column adding all the "1" values across the row.
+- I create total category diagnosis columns by adding "1" values for those categories accross the row.
+
+## Questions
+
+- If `id` is a unique child, then some of these are the same kids abandoned more than once.
+- there is also one pure duplicate. See diagnosis-01-import.
+
 ## Setup
 
 ```{r setup, echo=T, results='hide', message=F, warning=F}
@@ -18,18 +37,6 @@ library(janitor)
 library(readxl)
 library(DT)
 ```
-
-
-## Goal and purpose
-
-- You want the count and percentage of kids that have at least one diagnosis. (But isn’t that all of them here?)
-- You want the count and percentage of kids with more than one diagnosis (i.e, more than one column with a result). Better yet, the count of the different diagnosis for each kid.
-- You want to categorize the diagnosis into three buckets: medical, mental/behavioral and developmental. Then you want to know how many kids have a diagnosis in more than one bucket.
-
-## Questions
-
-- If `id` is a unique child, then some of these are the same kids abandoned more than once.
-- there is also one pure duplicate. See diagnosis-01-import.
 
 ## Import
 
@@ -44,7 +51,7 @@ abandon %>% glimpse()
 
 The idea here is to create new columns (with structured names) that has "1" if the diagnosis is present in that column. Since any text equates to a diagnosis per Lindstrom editing, I do this by setting to "1" if not NA.
 
-I can structure the column name as a category by starting the name with a category, like "a_ptsd" or "b_asthma".
+I structure the column name as a category by starting the name with a code, like "a_ptsd" or "b_asthma".
 
 > We can update this later with real categories.
 
@@ -98,7 +105,7 @@ abandon_cats <- abandon %>%
   )
 ```
 
-## Diagnosis totals
+## Create diagnosis totals
 
 Creates `diag_count` columns that sum diagnosis each category and then the total.
 
@@ -113,6 +120,7 @@ abandon_cats_totaled <- abandon_cats %>%
   )
 ```
 
+## Results of diagnosis counts
 
 ### Rows with 2+ diagnosis
 
