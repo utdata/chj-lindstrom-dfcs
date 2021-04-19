@@ -16,24 +16,16 @@ library(janitor)
 library(readxl)
 ```
 
-## Goal and purpose
+## Goal of notebook
 
-- You want the count and percentage of kids that have at least one diagnosis. (But isn’t that all of them here?)
-- You want the count and percentage of kids with more than one diagnosis (i.e, more than one column with a result). Better yet, the count of the different diagnosis for each kid.
-- You want to categorize the diagnosis into three buckets: medical, mental/behavioral and developmental. Then you want to know how many kids have a diagnosis in more than one bucket.
-
-## Ideas
-
-- I could do 1 or 0 as true for each disorder type.
-- I'd like to name the disorder type with the classification: mb_ptsd, m_asthma, d_learning_disability
-- by using a number, I can then sum across rows to get totals.
-- by having the categorization, I could do that using `starts_with("mb_")`, etc.
+To inspect the data and do any cleanup or renaming. Further analysis will be in other notebooks.
 
 ## Import
 
-```{r}
+```{r read}
 data <- read_excel("data-raw/Children with Diagnosis 2106 to 2020.xlsx") %>% clean_names() %>% arrange(id, cal_yr)
-# peek
+
+# peek at the data
 data %>% glimpse()
 ```
 
@@ -41,49 +33,57 @@ data %>% glimpse()
 
 If `id` is a unique child then we have multiples. Kids can be abandoned more than once, so maybe not a big deal.
 
-```{r}
+```{r smell_id}
 data %>% 
   count(id) %>% 
   arrange(n %>% desc()) %>% 
   filter(n > 1)
 ```
 
-```{r}
+```{r smell_id_detail}
 data %>% 
   filter(id == "DD3XV285")
 ```
 
 ### Checking duplicates
 
-```{r}
+This one is suspect because it is exactly the same. Details make two real records unlikely.
+
+```{r smell_dupes}
 data %>% 
   get_dupes()
 ```
+### Peek at removal_reason
 
-### Peeking at latest placement
+```{r peek_reason}
+data %>% 
+  count(removal_reason)
+```
 
-```{r}
+### Peek at latest placement
+
+```{r peek_placement}
 data %>% 
   count(latest_placement)
 ```
 
-### Peeking permanency_plan
+### Peek permanency_plan
 
-```{r}
+```{r peek_plan}
 data %>% 
   count(permanency_plan)
 ```
 
-## Peek race_ethnicity
+### Peek at race_ethnicity
 
-```{r}
+```{r peek_race}
 data %>% 
   count(race_ethnicity)
 ```
 
 ## Rename some columns
 
-```{r}
+```{r rename_cols}
 diagnosis_clean <- data %>% 
   rename(
     separation_disorders = attachment_disorder_separation_anxiety_disorder,
@@ -95,7 +95,7 @@ diagnosis_clean <- data %>%
 
 ## Export data
 
-```{r}
+```{r export}
 diagnosis_clean %>% 
   write_rds("data-processed/diagnosis_clean.rds")
 ```

@@ -26,30 +26,23 @@ library(DT)
 - You want the count and percentage of kids with more than one diagnosis (i.e, more than one column with a result). Better yet, the count of the different diagnosis for each kid.
 - You want to categorize the diagnosis into three buckets: medical, mental/behavioral and developmental. Then you want to know how many kids have a diagnosis in more than one bucket.
 
-## Ideas
-
-- I could do 1 or 0 as true for each disorder type.
-- I'd like to name the disorder type with the classification: mb_ptsd, m_asthma, d_learning_disability
-- by using a number, I can then sum across rows to get totals. I have to use `rowwise()` to do this.
-- by having the categorization, I could do that using `starts_with("mb_")`, etc.
-
-
 ## Questions
 
-- If `id` is a unique childe, then some of these are the same kids abandoned more than once.
+- If `id` is a unique child, then some of these are the same kids abandoned more than once.
 - there is also one pure duplicate. See diagnosis-01-import.
 
 ## Import
+
+Brings in cleaned data from diagnosis-01-import.
 
 ```{r read}
 abandon <- read_rds("data-processed/diagnosis_clean.rds")
 abandon %>% glimpse()
 ```
 
-
 ## Create truthy diagnosis
 
-The idea here is to create new columns (with structured names) that has "1" if any diagnosis is present in that column. I do this by setting to "1" if not NA.
+The idea here is to create new columns (with structured names) that has "1" if the diagnosis is present in that column. Since any text equates to a diagnosis per Lindstrom editing, I do this by setting to "1" if not NA.
 
 I can structure the column name as a category by starting the name with a category, like "a_ptsd" or "b_asthma".
 
@@ -107,7 +100,7 @@ abandon_cats <- abandon %>%
 
 ## Diagnosis totals
 
-Creates `diag_count` columns sum total diagnosis = true and category = true.
+Creates `diag_count` columns that sum diagnosis each category and then the total.
 
 ```{r create_totals}
 abandon_cats_totaled <- abandon_cats %>% 
@@ -116,28 +109,28 @@ abandon_cats_totaled <- abandon_cats %>%
     diag_count_a = sum(c_across(starts_with("a_"))),
     diag_count_b = sum(c_across(starts_with("b_"))),
     diag_count_c = sum(c_across(starts_with("c_"))),
-    diag_count_total = sum(c_across(starts_with(c("a_","b_", "c_")))),
+    diag_count_total = sum(c_across(starts_with(c("a_","b_", "c_")))), # include all cat_ columns
   )
 ```
 
 
 ### Rows with 2+ diagnosis
 
-Just filters for totals more than 1 then counts the rows.
+Filters for `diag_count_total` with more than 1 then counts the rows.
 
 ```{r count_diag_gt_two}
 abandon_cats_totaled %>% 
-  filter(diag_count_total >= 2) %>% 
+  filter(diag_count_total > 1) %>% 
   nrow()
 ```
 
 ### Testing diagnosis counts
 
-This shows proof of concept that the diag_counts work.
+This shows proof of concept that the diag_counts work. The diag_count_total was independently calculated from all cat_ columns.
 
 ```{r cats_totaled}
 abandon_cats_totaled %>% 
-  select(id,starts_with("diag_count_")) %>% 
+  select(id, starts_with("diag_count_")) %>% 
   datatable()
 ```
 

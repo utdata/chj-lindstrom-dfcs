@@ -2853,27 +2853,15 @@ div.tocify {
 <pre class="r"><code>library(tidyverse)
 library(janitor)
 library(readxl)</code></pre>
-<div id="goal-and-purpose" class="section level2">
-<h2>Goal and purpose</h2>
-<ul>
-<li>You want the count and percentage of kids that have at least one diagnosis. (But isn’t that all of them here?)</li>
-<li>You want the count and percentage of kids with more than one diagnosis (i.e, more than one column with a result). Better yet, the count of the different diagnosis for each kid.</li>
-<li>You want to categorize the diagnosis into three buckets: medical, mental/behavioral and developmental. Then you want to know how many kids have a diagnosis in more than one bucket.</li>
-</ul>
-</div>
-<div id="ideas" class="section level2">
-<h2>Ideas</h2>
-<ul>
-<li>I could do 1 or 0 as true for each disorder type.</li>
-<li>I’d like to name the disorder type with the classification: mb_ptsd, m_asthma, d_learning_disability</li>
-<li>by using a number, I can then sum across rows to get totals.</li>
-<li>by having the categorization, I could do that using <code>starts_with(&quot;mb_&quot;)</code>, etc.</li>
-</ul>
+<div id="goal-of-notebook" class="section level2">
+<h2>Goal of notebook</h2>
+<p>To inspect the data and do any cleanup or renaming. Further analysis will be in other notebooks.</p>
 </div>
 <div id="import" class="section level2">
 <h2>Import</h2>
 <pre class="r"><code>data &lt;- read_excel(&quot;data-raw/Children with Diagnosis 2106 to 2020.xlsx&quot;) %&gt;% clean_names() %&gt;% arrange(id, cal_yr)
-# peek
+
+# peek at the data
 data %&gt;% glimpse()</code></pre>
 <pre><code>## Rows: 1,268
 ## Columns: 54
@@ -2953,6 +2941,7 @@ data %&gt;% glimpse()</code></pre>
 </div>
 <div id="checking-duplicates" class="section level3">
 <h3>Checking duplicates</h3>
+<p>This one is suspect because it is exactly the same. Details make two real records unlikely.</p>
 <pre class="r"><code>data %&gt;% 
   get_dupes()</code></pre>
 <pre><code>## No variable names specified - using all columns.</code></pre>
@@ -2962,8 +2951,18 @@ data %&gt;% glimpse()</code></pre>
   </script>
 </div>
 </div>
-<div id="peeking-at-latest-placement" class="section level3">
-<h3>Peeking at latest placement</h3>
+<div id="peek-at-removal_reason" class="section level3">
+<h3>Peek at removal_reason</h3>
+<pre class="r"><code>data %&gt;% 
+  count(removal_reason)</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["removal_reason"],"name":[1],"type":["chr"],"align":["left"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"Abandonment","2":"474","_rn_":"1"},{"1":"Abandonment--Caretaker's Inability to Cope Due to Illness or Other Reason","2":"44","_rn_":"2"},{"1":"Abandonment--Relinquishment","2":"7","_rn_":"3"},{"1":"Abandonment--Relinquishment--Caretaker's Inability to Cope Due to Illness or Other Reason","2":"3","_rn_":"4"},{"1":"Caretaker's Inability to Cope Due to Illness or Other Reason","2":"644","_rn_":"5"},{"1":"Relinquishment","2":"87","_rn_":"6"},{"1":"Relinquishment--Caretaker's Inability to Cope Due to Illness or Other Reason","2":"9","_rn_":"7"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+<div id="peek-at-latest-placement" class="section level3">
+<h3>Peek at latest placement</h3>
 <pre class="r"><code>data %&gt;% 
   count(latest_placement)</code></pre>
 <div data-pagedtable="false">
@@ -2972,8 +2971,8 @@ data %&gt;% glimpse()</code></pre>
   </script>
 </div>
 </div>
-<div id="peeking-permanency_plan" class="section level3">
-<h3>Peeking permanency_plan</h3>
+<div id="peek-permanency_plan" class="section level3">
+<h3>Peek permanency_plan</h3>
 <pre class="r"><code>data %&gt;% 
   count(permanency_plan)</code></pre>
 <div data-pagedtable="false">
@@ -2982,15 +2981,15 @@ data %&gt;% glimpse()</code></pre>
   </script>
 </div>
 </div>
-</div>
-<div id="peek-race_ethnicity" class="section level2">
-<h2>Peek race_ethnicity</h2>
+<div id="peek-at-race_ethnicity" class="section level3">
+<h3>Peek at race_ethnicity</h3>
 <pre class="r"><code>data %&gt;% 
   count(race_ethnicity)</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
 {"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["race_ethnicity"],"name":[1],"type":["chr"],"align":["left"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"Am Ind/AK Nat(non-Hispanic)","2":"1","_rn_":"1"},{"1":"Asian/Oriental (non-Hispanic)","2":"3","_rn_":"2"},{"1":"Black (Hispanic)","2":"12","_rn_":"3"},{"1":"Black (non-Hispanic)","2":"674","_rn_":"4"},{"1":"Black-White (Hispanic)","2":"7","_rn_":"5"},{"1":"Black-White (non-Hispanic)","2":"76","_rn_":"6"},{"1":"Black-White (Unable to Determine)","2":"1","_rn_":"7"},{"1":"Multiple (Non-Hispanic)","2":"13","_rn_":"8"},{"1":"Nat Hawaii/Pac Is (non-Hispanic)","2":"4","_rn_":"9"},{"1":"Unable to Determine","2":"2","_rn_":"10"},{"1":"White (Hispanic)","2":"59","_rn_":"11"},{"1":"White (non-Hispanic)","2":"413","_rn_":"12"},{"1":"White (Unable to Determine)","2":"3","_rn_":"13"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
+</div>
 </div>
 </div>
 <div id="rename-some-columns" class="section level2">
