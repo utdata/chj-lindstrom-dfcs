@@ -142,3 +142,10 @@ abandon_cats_totaled %>%
   datatable()
 ```
 
+## Category diagnosis counts
+
+I think I can do this the same way as the categories:
+
+- Create col case_when "1" if value in any cat_diag_ col.
+- sum across those new cols
+- count how many rows are +1 in that total_cat_diag
