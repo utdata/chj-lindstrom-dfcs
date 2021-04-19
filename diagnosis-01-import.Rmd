@@ -1,0 +1,102 @@
+---
+title: "Lindstrom - Diagnosis count clean"
+output:
+  html_document:
+    theme: flatly
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    df_print: paged
+knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_dir = "docs") })
+---
+
+```{r setup, echo=T, results='hide', message=F, warning=F}
+library(tidyverse)
+library(janitor)
+library(readxl)
+```
+
+## Goal and purpose
+
+- You want the count and percentage of kids that have at least one diagnosis. (But isn’t that all of them here?)
+- You want the count and percentage of kids with more than one diagnosis (i.e, more than one column with a result). Better yet, the count of the different diagnosis for each kid.
+- You want to categorize the diagnosis into three buckets: medical, mental/behavioral and developmental. Then you want to know how many kids have a diagnosis in more than one bucket.
+
+## Ideas
+
+- I could do 1 or 0 as true for each disorder type.
+- I'd like to name the disorder type with the classification: mb_ptsd, m_asthma, d_learning_disability
+- by using a number, I can then sum across rows to get totals.
+- by having the categorization, I could do that using `starts_with("mb_")`, etc.
+
+## Import
+
+```{r}
+data <- read_excel("data-raw/Children with Diagnosis 2106 to 2020.xlsx") %>% clean_names() %>% arrange(id, cal_yr)
+# peek
+data %>% glimpse()
+```
+
+## Data smells
+
+If `id` is a unique child then we have multiples. Kids can be abandoned more than once, so maybe not a big deal.
+
+```{r}
+data %>% 
+  count(id) %>% 
+  arrange(n %>% desc()) %>% 
+  filter(n > 1)
+```
+
+```{r}
+data %>% 
+  filter(id == "DD3XV285")
+```
+
+### Checking duplicates
+
+```{r}
+data %>% 
+  get_dupes()
+```
+
+### Peeking at latest placement
+
+```{r}
+data %>% 
+  count(latest_placement)
+```
+
+### Peeking permanency_plan
+
+```{r}
+data %>% 
+  count(permanency_plan)
+```
+
+## Peek race_ethnicity
+
+```{r}
+data %>% 
+  count(race_ethnicity)
+```
+
+## Rename some columns
+
+```{r}
+diagnosis_clean <- data %>% 
+  rename(
+    separation_disorders = attachment_disorder_separation_anxiety_disorder,
+    congnitive = developmentally_disabled_cognitive_disorder,
+    fetal_alcohol_drug = fetal_alcohol_syndrome_infant_drug_exposure,
+    mobility_impaired = mobility_impaired_physically_disabled
+  )
+```
+
+## Export data
+
+```{r}
+diagnosis_clean %>% 
+  write_rds("data-processed/diagnosis_clean.rds")
+```
+

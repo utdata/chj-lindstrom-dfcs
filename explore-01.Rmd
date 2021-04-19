@@ -1,0 +1,84 @@
+---
+title: "DFCS look"
+output:
+  html_document:
+    theme: flatly
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    df_print: paged
+knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_dir = "docs") })
+---
+
+```{r setup, echo=T, results='hide', message=F, warning=F}
+library(tidyverse)
+library(janitor)
+library(readxl)
+library(tidytext)
+```
+
+## Import
+
+```{r}
+data <- read_excel("data-processed/Lindstrom-DFCS-Data.xlsx") %>% clean_names()
+```
+
+## Cleaning
+
+Taking a look:
+
+```{r}
+data %>% glimpse()
+```
+
+
+## New idea
+
+I could go through the original diagnosis column and look for the same keywords.
+
+Developmentally Disabled##Infant Drug Addiction/Prenatal Drug Exposed
+
+## Cleaning diagnosis
+
+We need to set up search variable for the categories and the columns.
+
+### Capture the columns
+
+```{r}
+cols_diag <- data %>% 
+  select(contains("diagnoses_")) %>%
+  names() %>% 
+  tibble::enframe(name = NULL) %>% 
+  rename(diag = value)
+
+cols_diag
+```
+
+### Categories list
+
+Alcohol-related
+
+```{r}
+list_alcohol <- c("alcohol")
+```
+
+
+```{r}
+data %>% 
+  count(diagnoses)
+```
+
+
+## Diagnosis issues
+
+The field includes multiple values separated by `##`. Teasing out this data might require making a new data set.
+
+
+## Various explore
+
+```{r}
+data %>% 
+  filter(str_detect(diagnoses,"Anxiety")) %>% 
+  select(diagnoses)
+```
+

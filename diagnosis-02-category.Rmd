@@ -1,0 +1,143 @@
+---
+title: "Lindstrom - Diagnosis counts"
+output:
+  html_document:
+    theme: flatly
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    df_print: paged
+knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_dir = "docs") })
+---
+
+## Setup
+
+```{r setup, echo=T, results='hide', message=F, warning=F}
+library(tidyverse)
+library(janitor)
+library(readxl)
+library(DT)
+```
+
+
+## Goal and purpose
+
+- You want the count and percentage of kids that have at least one diagnosis. (But isn’t that all of them here?)
+- You want the count and percentage of kids with more than one diagnosis (i.e, more than one column with a result). Better yet, the count of the different diagnosis for each kid.
+- You want to categorize the diagnosis into three buckets: medical, mental/behavioral and developmental. Then you want to know how many kids have a diagnosis in more than one bucket.
+
+## Ideas
+
+- I could do 1 or 0 as true for each disorder type.
+- I'd like to name the disorder type with the classification: mb_ptsd, m_asthma, d_learning_disability
+- by using a number, I can then sum across rows to get totals. I have to use `rowwise()` to do this.
+- by having the categorization, I could do that using `starts_with("mb_")`, etc.
+
+
+## Questions
+
+- If `id` is a unique childe, then some of these are the same kids abandoned more than once.
+- there is also one pure duplicate. See diagnosis-01-import.
+
+## Import
+
+```{r read}
+abandon <- read_rds("data-processed/diagnosis_clean.rds")
+abandon %>% glimpse()
+```
+
+
+## Create truthy diagnosis
+
+The idea here is to create new columns (with structured names) that has "1" if any diagnosis is present in that column. I do this by setting to "1" if not NA.
+
+I can structure the column name as a category by starting the name with a category, like "a_ptsd" or "b_asthma".
+
+> We can update this later with real categories.
+
+```{r create_diag}
+abandon_cats <- abandon %>% 
+  mutate(
+    # I need to do some checking on this to make sure I have each column
+    a_add_adhd = case_when(is.na(add_adhd) ~ 0, TRUE  ~  1),
+    a_odd = case_when(is.na(odd) ~ 0, TRUE  ~  1),
+    b_adjustment_disorder = case_when(is.na(adjustment_disorder) ~ 0, TRUE  ~  1),
+    b_anxiety_disorder = case_when(is.na(anxiety_disorder) ~ 0, TRUE  ~  1),
+    b_other = case_when(is.na(other) ~ 0, TRUE  ~  1),
+    c_asthma = case_when(is.na(asthma) ~ 0, TRUE  ~  1),
+    c_allergies = case_when(is.na(allergies) ~ 0, TRUE  ~  1),
+    a_separation_disorders = case_when(is.na(separation_disorders) ~ 0, TRUE  ~  1),
+    a_autism = case_when(is.na(autism) ~ 0, TRUE  ~  1),
+    a_bipolar = case_when(is.na(bipolar) ~ 0, TRUE  ~  1),
+    a_conduct_disorder = case_when(is.na(conduct_disorder) ~ 0, TRUE  ~  1),
+    a_anemia = case_when(is.na(anemia) ~ 0, TRUE  ~  1),
+    a_depression = case_when(is.na(depression) ~ 0, TRUE  ~  1),
+    a_disruptive_behavior_disorder = case_when(is.na(disruptive_behavior_disorder) ~ 0, TRUE  ~  1),
+    a_cerebral_palsey = case_when(is.na(cerebral_palsey) ~ 0, TRUE  ~  1),
+    a_congnitive = case_when(is.na(congnitive) ~ 0, TRUE  ~  1),
+    a_diabetes = case_when(is.na(diabetes) ~ 0, TRUE  ~  1),
+    a_dysthymic_disorder = case_when(is.na(dysthymic_disorder) ~ 0, TRUE  ~  1),
+    a_disassociative_disorders = case_when(is.na(disassociative_disorders) ~ 0, TRUE  ~  1),
+    a_failure_to_thrive = case_when(is.na(failure_to_thrive) ~ 0, TRUE  ~  1),
+    a_downs_syndrome = case_when(is.na(downs_syndrome) ~ 0, TRUE  ~  1),
+    a_enuresis_encopresis = case_when(is.na(enuresis_encopresis) ~ 0, TRUE  ~  1),
+    a_emotionally_disturbed = case_when(is.na(emotionally_disturbed) ~ 0, TRUE  ~  1),
+    a_hearing_impaired = case_when(is.na(hearing_impaired) ~ 0, TRUE  ~  1),
+    a_fetal_alcohol_drug = case_when(is.na(fetal_alcohol_drug) ~ 0, TRUE  ~  1),
+    a_mental_retardation = case_when(is.na(mental_retardation) ~ 0, TRUE  ~  1),
+    a_pervasive_developmental_disorder = case_when(is.na(pervasive_developmental_disorder) ~ 0, TRUE  ~  1),
+    a_schizoaffective_schizophrenia = case_when(is.na(schizoaffective_schizophrenia) ~ 0, TRUE  ~  1),
+    a_impulse_control_disorder = case_when(is.na(impulse_control_disorder) ~ 0, TRUE  ~  1),
+    a_intellectual_disability = case_when(is.na(intellectual_disability) ~ 0, TRUE  ~  1),
+    a_visually_impaired = case_when(is.na(visually_impaired) ~ 0, TRUE  ~  1),
+    a_learning_disability = case_when(is.na(learning_disability) ~ 0, TRUE  ~  1),
+    a_mobility_impaired = case_when(is.na(mobility_impaired) ~ 0, TRUE  ~  1),
+    a_ptsd = case_when(is.na(ptsd) ~ 0, TRUE  ~  1),
+    a_sex_disorder_paraphilia = case_when(is.na(sex_disorder_paraphilia) ~ 0, TRUE  ~  1),
+    a_neurological_disorders = case_when(is.na(neurological_disorders) ~ 0, TRUE  ~  1),
+    a_expectant_youth = case_when(is.na(expectant_youth) ~ 0, TRUE  ~  1),
+    a_respiratory_failure = case_when(is.na(respiratory_failure) ~ 0, TRUE  ~  1),
+    a_mood_disorder = case_when(is.na(mood_disorder) ~ 0, TRUE  ~  1),
+    a_speech_disability = case_when(is.na(speech_disability) ~ 0, TRUE  ~  1),
+    a_personality_disorder = case_when(is.na(personality_disorder) ~ 0, TRUE  ~  1),
+    a_other_with_diagnosis = case_when(is.na(other_with_diagnosis) ~ 0, TRUE  ~  1),
+    # more as needed
+  )
+```
+
+## Diagnosis totals
+
+Creates `diag_count` columns sum total diagnosis = true and category = true.
+
+```{r create_totals}
+abandon_cats_totaled <- abandon_cats %>% 
+  rowwise() %>% 
+  mutate(
+    diag_count_a = sum(c_across(starts_with("a_"))),
+    diag_count_b = sum(c_across(starts_with("b_"))),
+    diag_count_c = sum(c_across(starts_with("c_"))),
+    diag_count_total = sum(c_across(starts_with(c("a_","b_", "c_")))),
+  )
+```
+
+
+### Rows with 2+ diagnosis
+
+Just filters for totals more than 1 then counts the rows.
+
+```{r count_diag_gt_two}
+abandon_cats_totaled %>% 
+  filter(diag_count_total >= 2) %>% 
+  nrow()
+```
+
+### Testing diagnosis counts
+
+This shows proof of concept that the diag_counts work.
+
+```{r cats_totaled}
+abandon_cats_totaled %>% 
+  select(id,starts_with("diag_count_")) %>% 
+  datatable()
+```
+
